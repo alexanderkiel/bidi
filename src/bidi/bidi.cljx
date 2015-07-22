@@ -229,13 +229,9 @@ actually a valid UUID (this is handled by the route matching logic)."
                         ;; Form a regexes group from each
                         (map (fn [x] (str "(" x ")")) %)
                         (reduce str %)
-                        ;; Add the 'remainder' group
-                        (str % "(.*)")
                         (re-pattern %)
-                        (re-matches % (:remainder env))
-                        (next %))]
-      (let [params (->> groups
-                        butlast         ; except the 'remainder' group
+                        (re-matches % (:remainder env)))]
+      (let [params (->> (next groups)
                         ;; Transform parameter values if necessary
                         (map list) (map apply (map transform-param this))
                         ;; Pair up with the parameter keys
@@ -245,7 +241,7 @@ actually a valid UUID (this is handled by the route matching logic)."
                         ;; Merge all key/values into a map
                         (into {}))]
         (-> env
-            (assoc-in [:remainder] (last groups))
+            (update-in [:remainder] #(subs % (count (first groups))))
             (update-in [:route-params] merge params)))))
 
   (unmatch-pattern [this m]
